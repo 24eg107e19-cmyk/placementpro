@@ -1,6 +1,8 @@
+
 package placementpro_backend.controller;
 
-import java.util.List;
+import placementpro_backend.entity.Job;
+import placementpro_backend.repository.JobRepository;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,12 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import placementpro_backend.entity.Job;
-import placementpro_backend.repository.JobRepository;
+import java.util.List;
+import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/jobs")
-@CrossOrigin
 public class JobController {
 
     private final JobRepository jobRepository;
@@ -26,47 +28,48 @@ public class JobController {
         this.jobRepository = jobRepository;
     }
 
-    @GetMapping("/test")
-    public String test() {
-        return "Job Controller is working!";
-    }
-
+    // Get all jobs
     @GetMapping
     public List<Job> getAllJobs() {
         return jobRepository.findAll();
     }
 
+    // Get a job by ID
     @GetMapping("/{id}")
     public Job getJobById(@PathVariable Long id) {
-        return jobRepository.findById(id).orElse(null);
+        return jobRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
     }
 
+    // Add a new job
     @PostMapping
-    public Job createJob(@RequestBody Job job) {
+    public Job addJob(@RequestBody Job job) {
         return jobRepository.save(job);
     }
 
+    // Update a job
     @PutMapping("/{id}")
-    public Job updateJob(
-            @PathVariable Long id,
-            @RequestBody Job job) {
+    public Job updateJob(@PathVariable Long id, @RequestBody Job updatedJob) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        if (!jobRepository.existsById(id)) {
-            return null;
-        }
+        job.setCompany(updatedJob.getCompany());
+        job.setJobRole(updatedJob.getJobRole());
+        job.setLocation(updatedJob.getLocation());
+        job.setPackageLpa(updatedJob.getPackageLpa());
+        job.setMinimumCgpa(updatedJob.getMinimumCgpa());
 
-        job.setId(id);
         return jobRepository.save(job);
     }
 
+    // Delete a job
     @DeleteMapping("/{id}")
-    public String deleteJob(@PathVariable Long id) {
+    public Map<String, String> deleteJob(@PathVariable Long id) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        if (!jobRepository.existsById(id)) {
-            return "Job not found";
-        }
+        jobRepository.delete(job);
 
-        jobRepository.deleteById(id);
-        return "Job deleted successfully";
+        return Map.of("message", "Job deleted successfully");
     }
 }

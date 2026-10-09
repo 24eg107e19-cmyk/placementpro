@@ -1,6 +1,8 @@
+
 package placementpro_backend.controller;
 
-import java.util.List;
+import placementpro_backend.entity.Student;
+import placementpro_backend.repository.StudentRepository;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,12 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import placementpro_backend.entity.Student;
-import placementpro_backend.repository.StudentRepository;
+import java.util.List;
+import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/students")
-@CrossOrigin
 public class StudentController {
 
     private final StudentRepository studentRepository;
@@ -26,47 +28,50 @@ public class StudentController {
         this.studentRepository = studentRepository;
     }
 
-    @GetMapping("/test")
-    public String test() {
-        return "Student Controller is working!";
-    }
-
+    // Get all students
     @GetMapping
     public List<Student> getAllStudents() {
         return studentRepository.findAll();
     }
 
+    // Get student by ID
     @GetMapping("/{id}")
     public Student getStudentById(@PathVariable Long id) {
-        return studentRepository.findById(id).orElse(null);
+        return studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
     }
 
+    // Add a student
     @PostMapping
-    public Student createStudent(@RequestBody Student student) {
+    public Student addStudent(@RequestBody Student student) {
         return studentRepository.save(student);
     }
 
+    // Update a student
     @PutMapping("/{id}")
     public Student updateStudent(
             @PathVariable Long id,
-            @RequestBody Student student) {
+            @RequestBody Student updatedStudent) {
 
-        if (!studentRepository.existsById(id)) {
-            return null;
-        }
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        student.setId(id);
+        student.setName(updatedStudent.getName());
+        student.setEmail(updatedStudent.getEmail());
+        student.setBranch(updatedStudent.getBranch());
+        student.setCgpa(updatedStudent.getCgpa());
+
         return studentRepository.save(student);
     }
 
+    // Delete a student
     @DeleteMapping("/{id}")
-    public String deleteStudent(@PathVariable Long id) {
+    public Map<String, String> deleteStudent(@PathVariable Long id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        if (!studentRepository.existsById(id)) {
-            return "Student not found";
-        }
+        studentRepository.delete(student);
 
-        studentRepository.deleteById(id);
-        return "Student deleted successfully";
+        return Map.of("message", "Student deleted successfully");
     }
 }
