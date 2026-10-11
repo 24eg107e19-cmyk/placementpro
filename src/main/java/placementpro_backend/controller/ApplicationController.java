@@ -1,31 +1,29 @@
 
 package placementpro_backend.controller;
 
-import placementpro_backend.entity.Application;
-import placementpro_backend.repository.ApplicationRepository;
+import java.util.List;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
+import placementpro_backend.entity.Application;
+import placementpro_backend.repository.ApplicationRepository;
 
 @RestController
-@CrossOrigin(origins = "*")
 @RequestMapping("/api/applications")
+@CrossOrigin(origins = "*")
 public class ApplicationController {
 
     private final ApplicationRepository applicationRepository;
 
-    public ApplicationController(
-            ApplicationRepository applicationRepository) {
+    public ApplicationController(ApplicationRepository applicationRepository) {
         this.applicationRepository = applicationRepository;
     }
 
@@ -35,19 +33,17 @@ public class ApplicationController {
         return applicationRepository.findAll();
     }
 
-    // Get application by ID
+    // Add a new application
+    @PostMapping
+    public Application addApplication(@RequestBody Application application) {
+        return applicationRepository.save(application);
+    }
+
+    // Get an application by ID
     @GetMapping("/{id}")
     public Application getApplicationById(@PathVariable Long id) {
         return applicationRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Application not found"));
-    }
-
-    // Add a new application
-    @PostMapping
-    public Application addApplication(
-            @RequestBody Application application) {
-        return applicationRepository.save(application);
+                .orElseThrow(() -> new RuntimeException("Application not found"));
     }
 
     // Update an application
@@ -56,28 +52,20 @@ public class ApplicationController {
             @PathVariable Long id,
             @RequestBody Application updatedApplication) {
 
-        Application application = applicationRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Application not found"));
+        Application existing = applicationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
 
-        // Copy fields from updatedApplication here if your
-        // Application entity has editable fields.
+        existing.setStatus(updatedApplication.getStatus());
 
-        return applicationRepository.save(application);
+        return applicationRepository.save(existing);
     }
-
-    // Delete an application
     @DeleteMapping("/{id}")
-    public Map<String, String> deleteApplication(
-            @PathVariable Long id) {
+    public String deleteApplication(@PathVariable Long id) {
+        Application existing = applicationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
 
-        Application application = applicationRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Application not found"));
+        applicationRepository.delete(existing);
 
-        applicationRepository.delete(application);
-
-        return Map.of(
-                "message", "Application deleted successfully");
+        return "Application deleted successfully";
     }
 }
